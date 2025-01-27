@@ -42,7 +42,9 @@ export function AuthForm() {
         if (error) throw error
         if (data.session) {
           console.log("Inicio de sesión exitoso")
+          console.log("Intentando redirigir a /dashboard")
           router.push("/dashboard")
+          console.log("Redirección ejecutada")
         }
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({

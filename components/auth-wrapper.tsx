@@ -14,8 +14,10 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
         data: { session },
       } = await supabase.auth.getSession()
       if (!session) {
+        console.log("No hay sesión activa, redirigiendo a /login")
         router.push("/login")
       } else {
+        console.log("Sesión activa encontrada")
         setIsLoading(false)
       }
     }
@@ -23,10 +25,12 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     checkAuth()
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Evento de autenticación:", event)
       if (event === "SIGNED_IN" && session) {
+        console.log("Usuario ha iniciado sesión")
         setIsLoading(false)
-        router.push("/dashboard")
       } else if (event === "SIGNED_OUT") {
+        console.log("Usuario ha cerrado sesión, redirigiendo a /login")
         router.push("/login")
       }
     })

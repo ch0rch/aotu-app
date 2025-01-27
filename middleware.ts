@@ -10,10 +10,14 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
+  console.log("Middleware: Verificando sesión para", req.nextUrl.pathname)
+
   if (!session && req.nextUrl.pathname.startsWith("/dashboard")) {
+    console.log("Middleware: No hay sesión, redirigiendo a /login")
     return NextResponse.redirect(new URL("/login", req.url))
   }
 
+  console.log("Middleware: Permitiendo acceso a", req.nextUrl.pathname)
   return res
 }
 
