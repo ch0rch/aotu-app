@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/ui/icons"
 import { supabase } from "@/lib/supabaseClient"
 import { refreshSession, waitForAuthStateChange } from "@/lib/auth-utils"
+import { useToast } from "@/components/ui/use-toast"
 
 type AuthMode = "login" | "register" | "forgotPassword"
 
@@ -15,7 +16,7 @@ export function AuthForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [authMode, setAuthMode] = useState<AuthMode>("login")
-  // Removed: const router = useRouter()
+  const { toast } = useToast()
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -30,17 +31,31 @@ export function AuthForm() {
         if (error) throw error
 
         console.log("Inicio de sesión exitoso")
+        toast({
+          title: "Inicio de sesión exitoso",
+          description: "Redirigiendo al dashboard...",
+        })
 
-        // Esperar a que la sesión se actualice
-        await waitForAuthStateChange()
+        try {
+          // Esperar a que la sesión se actualice
+          await waitForAuthStateChange()
 
-        // Refrescar la sesión para asegurarnos de que está disponible
-        const session = await refreshSession()
+          // Refrescar la sesión para asegurarnos de que está disponible
+          const session = await refreshSession()
 
-        if (session) {
-          console.log("Sesión verificada, redirigiendo a /dashboard")
-          // Forzar una navegación completa
-          window.location.href = "/dashboard"
+          if (session) {
+            console.log("Sesión verificada, redirigiendo a /dashboard")
+            window.location.href = "/dashboard"
+          } else {
+            throw new Error("No se pudo obtener la sesión después del inicio de sesión")
+          }
+        } catch (error) {
+          console.error("Error durante la redirección:", error)
+          toast({
+            title: "Error de redirección",
+            description: "Hubo un problema al redirigir. Por favor, intenta nuevamente.",
+            variant: "destructive",
+          })
         }
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({
@@ -48,14 +63,25 @@ export function AuthForm() {
           password,
         })
         if (error) throw error
-        console.log("Registro exitoso")
+        toast({
+          title: "Registro exitoso",
+          description: "Por favor, verifica tu correo electrónico para confirmar tu cuenta.",
+        })
       } else if (authMode === "forgotPassword") {
         const { error } = await supabase.auth.resetPasswordForEmail(email)
         if (error) throw error
-        console.log("Correo de recuperación enviado")
+        toast({
+          title: "Correo enviado",
+          description: "Se ha enviado un correo con instrucciones para restablecer tu contraseña.",
+        })
       }
     } catch (error) {
       console.error("Error:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -72,6 +98,11 @@ export function AuthForm() {
       if (error) throw error
     } catch (error) {
       console.error("Error al iniciar sesión con Google:", error)
+      toast({
+        title: "Error de inicio de sesión",
+        description: "Hubo un problema al iniciar sesión con Google. Por favor, intenta nuevamente.",
+        variant: "destructive",
+      })
     }
   }
 
