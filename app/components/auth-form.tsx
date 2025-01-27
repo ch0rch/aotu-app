@@ -7,30 +7,40 @@ import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/ui/icons"
 import { supabase } from "@/lib/supabaseClient"
 
+type AuthMode = "login" | "register" | "forgotPassword"
+
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [authMode, setAuthMode] = useState<AuthMode>("login")
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        throw error
+      if (authMode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (error) throw error
+        console.log("Inicio de sesión exitoso")
+      } else if (authMode === "register") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        })
+        if (error) throw error
+        console.log("Registro exitoso")
+      } else if (authMode === "forgotPassword") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email)
+        if (error) throw error
+        console.log("Correo de recuperación enviado")
       }
-
-      // Redirect or update UI state on successful login
-      console.log("Login successful")
     } catch (error) {
-      console.error("Error logging in:", error)
-      // Handle error (e.g., show error message to user)
+      console.error("Error:", error)
     } finally {
       setIsLoading(false)
     }
@@ -41,13 +51,9 @@ export function AuthForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
       })
-
-      if (error) {
-        throw error
-      }
+      if (error) throw error
     } catch (error) {
-      console.error("Error logging in with Google:", error)
-      // Handle error (e.g., show error message to user)
+      console.error("Error al iniciar sesión con Google:", error)
     }
   }
 
@@ -55,10 +61,22 @@ export function AuthForm() {
     <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
       <div className="flex flex-col space-y-2 text-center">
         <Icons.logo className="mx-auto h-6 w-6" />
-        <h1 className="text-2xl font-semibold tracking-tight">Bienvenido a AOTU</h1>
-        <p className="text-sm text-muted-foreground">Ingresa tus credenciales para acceder al sistema</p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {authMode === "login"
+            ? "Bienvenido de vuelta"
+            : authMode === "register"
+              ? "Crea tu cuenta"
+              : "Recupera tu contraseña"}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {authMode === "login"
+            ? "Ingresa tus credenciales para acceder"
+            : authMode === "register"
+              ? "Ingresa tus datos para registrarte"
+              : "Ingresa tu correo para recuperar tu contraseña"}
+        </p>
       </div>
-      <div className={`grid gap-6`}>
+      <div className="grid gap-6">
         <form onSubmit={onSubmit}>
           <div className="grid gap-2">
             <div className="grid gap-1">
@@ -77,25 +95,31 @@ export function AuthForm() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div className="grid gap-1">
-              <Label className="sr-only" htmlFor="password">
-                Contraseña
-              </Label>
-              <Input
-                id="password"
-                placeholder="Contraseña"
-                type="password"
-                autoCapitalize="none"
-                autoComplete="current-password"
-                autoCorrect="off"
-                disabled={isLoading}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+            {authMode !== "forgotPassword" && (
+              <div className="grid gap-1">
+                <Label className="sr-only" htmlFor="password">
+                  Contraseña
+                </Label>
+                <Input
+                  id="password"
+                  placeholder="Contraseña"
+                  type="password"
+                  autoCapitalize="none"
+                  autoComplete="current-password"
+                  autoCorrect="off"
+                  disabled={isLoading}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            )}
             <Button disabled={isLoading}>
               {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-              Iniciar sesión
+              {authMode === "login"
+                ? "Iniciar sesión"
+                : authMode === "register"
+                  ? "Registrarse"
+                  : "Enviar correo de recuperación"}
             </Button>
           </div>
         </form>
@@ -116,17 +140,34 @@ export function AuthForm() {
           Google
         </Button>
       </div>
-      <p className="px-8 text-center text-sm text-muted-foreground">
-        Al hacer clic en continuar, aceptas nuestros{" "}
-        <a href="/terms" className="underline underline-offset-4 hover:text-primary">
-          Términos de servicio
-        </a>{" "}
-        y{" "}
-        <a href="/privacy" className="underline underline-offset-4 hover:text-primary">
-          Política de privacidad
-        </a>
-        .
-      </p>
+      <div className="px-8 text-center text-sm text-muted-foreground">
+        {authMode === "login" ? (
+          <>
+            ¿No tienes una cuenta?{" "}
+            <Button variant="link" className="underline underline-offset-4" onClick={() => setAuthMode("register")}>
+              Regístrate
+            </Button>
+          </>
+        ) : authMode === "register" ? (
+          <>
+            ¿Ya tienes una cuenta?{" "}
+            <Button variant="link" className="underline underline-offset-4" onClick={() => setAuthMode("login")}>
+              Inicia sesión
+            </Button>
+          </>
+        ) : (
+          <Button variant="link" className="underline underline-offset-4" onClick={() => setAuthMode("login")}>
+            Volver al inicio de sesión
+          </Button>
+        )}
+      </div>
+      {authMode === "login" && (
+        <div className="text-center text-sm">
+          <Button variant="link" className="underline underline-offset-4" onClick={() => setAuthMode("forgotPassword")}>
+            ¿Olvidaste tu contraseña?
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
