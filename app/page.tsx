@@ -1,4 +1,4 @@
-import { AuthForm } from "./components/auth-form"
+import { AuthForm } from "@/app/components/auth-form"
 
 export default function Home() {
   return (
