@@ -2,10 +2,7 @@ import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true,
-  },
-  // Asegúrate de que las siguientes opciones estén configuradas si las necesitas
+  // Eliminamos la sección 'experimental' ya que 'appDir' ya no es necesario
   images: {
     domains: ["localhost", "your-supabase-project.supabase.co"], // Ajusta según tus necesidades
   },
