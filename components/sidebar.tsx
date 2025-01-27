@@ -1,11 +1,8 @@
 import Link from "next/link"
 import { Home, Bell, Package, ShoppingBag } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
-
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn("pb-12 w-64", className)}>
       <div className="space-y-4 py-4">
