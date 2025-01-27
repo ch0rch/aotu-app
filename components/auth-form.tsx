@@ -35,15 +35,13 @@ export function AuthForm() {
         console.log("Inicio de sesión exitoso")
         toast({
           title: "Inicio de sesión exitoso",
-          description: "Redirigiendo al dashboard...",
+          description: "Verificando sesión...",
         })
 
         try {
-          // Esperar a que la sesión se actualice
-          await waitForAuthStateChange()
-
-          // Refrescar la sesión para asegurarnos de que está disponible
-          const session = await refreshSession()
+          console.log("Esperando cambio de estado de autenticación...")
+          const session = await waitForAuthStateChange(15000) // Aumentamos el tiempo de espera a 15 segundos
+          console.log("Sesión obtenida:", session)
 
           if (session) {
             console.log("Sesión verificada, redirigiendo a /dashboard")
@@ -55,7 +53,7 @@ export function AuthForm() {
           console.error("Error durante la redirección:", error)
           toast({
             title: "Error de redirección",
-            description: "Hubo un problema al redirigir. Por favor, intenta nuevamente.",
+            description: "Hubo un problema al verificar la sesión. Por favor, intenta nuevamente o recarga la página.",
             variant: "destructive",
           })
         }
@@ -222,7 +220,6 @@ export function AuthForm() {
     </div>
   )
 }
-
 
 
 

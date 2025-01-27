@@ -10,16 +10,29 @@ export async function refreshSession() {
 export async function waitForAuthStateChange(timeout = 10000) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
-      subscription.unsubscribe()
+      unsubscribe()
       reject(new Error("Timeout waiting for auth state change"))
     }, timeout)
 
+    let authStateChanged = false
+
     const {
-      data: { subscription },
+      data: { subscription: unsubscribe },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
+      console.log("Auth state change event:", event)
+      if (event === "SIGNED_IN" && session) {
         clearTimeout(timer)
-        subscription.unsubscribe()
+        unsubscribe()
+        authStateChanged = true
+        resolve(session)
+      }
+    })
+
+    // Verificar inmediatamente si ya hay una sesión
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && !authStateChanged) {
+        clearTimeout(timer)
+        unsubscribe()
         resolve(session)
       }
     })
