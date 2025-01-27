@@ -5,17 +5,50 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/ui/icons"
+import { supabase } from "@/lib/supabaseClient"
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
 
-  async function onSubmit(event: React.SyntheticEvent) {
+  async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setIsLoading(true)
 
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        throw error
+      }
+
+      // Redirect or update UI state on successful login
+      console.log("Login successful")
+    } catch (error) {
+      console.error("Error logging in:", error)
+      // Handle error (e.g., show error message to user)
+    } finally {
       setIsLoading(false)
-    }, 3000)
+    }
+  }
+
+  async function handleGoogleLogin() {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+      })
+
+      if (error) {
+        throw error
+      }
+    } catch (error) {
+      console.error("Error logging in with Google:", error)
+      // Handle error (e.g., show error message to user)
+    }
   }
 
   return (
@@ -40,6 +73,8 @@ export function AuthForm() {
                 autoComplete="email"
                 autoCorrect="off"
                 disabled={isLoading}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-1">
@@ -54,6 +89,8 @@ export function AuthForm() {
                 autoComplete="current-password"
                 autoCorrect="off"
                 disabled={isLoading}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             <Button disabled={isLoading}>
@@ -70,7 +107,7 @@ export function AuthForm() {
             <span className="bg-background px-2 text-muted-foreground">O continúa con</span>
           </div>
         </div>
-        <Button variant="outline" type="button" disabled={isLoading}>
+        <Button variant="outline" type="button" disabled={isLoading} onClick={handleGoogleLogin}>
           {isLoading ? (
             <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
           ) : (
