@@ -1,4 +1,6 @@
 import { Inter } from "next/font/google"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 import { ToastProvider } from "@/components/ui/toast"
 import "./globals.css"
 
@@ -9,11 +11,17 @@ export const metadata = {
   description: "Aplicación de importación AOTU",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const supabase = createServerComponentClient({ cookies })
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
   return (
     <html lang="es">
       <body className={inter.className}>

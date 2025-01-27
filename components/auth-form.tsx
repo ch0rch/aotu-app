@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,7 +17,7 @@ export function AuthForm() {
   const [password, setPassword] = useState("")
   const [authMode, setAuthMode] = useState<AuthMode>("login")
   const { toast } = useToast()
-  //const router = useRouter() //Removed as per update 2
+  const router = useRouter()
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -35,8 +36,8 @@ export function AuthForm() {
           description: "Redirigiendo al dashboard...",
         })
 
-        // Redirección simple
-        window.location.href = "/dashboard"
+        // Usar router.push para la redirección
+        router.push("/dashboard")
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({
           email,
@@ -165,6 +166,7 @@ export function AuthForm() {
     </div>
   )
 }
+
 
 
 

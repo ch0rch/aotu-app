@@ -10,9 +10,15 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Solo protegemos las rutas del dashboard
+  // Si no hay sesión y el usuario intenta acceder a /dashboard, redirigir a /login
   if (!session && req.nextUrl.pathname.startsWith("/dashboard")) {
     const redirectUrl = new URL("/login", req.url)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // Si hay sesión y el usuario intenta acceder a /login, redirigir a /dashboard
+  if (session && req.nextUrl.pathname === "/login") {
+    const redirectUrl = new URL("/dashboard", req.url)
     return NextResponse.redirect(redirectUrl)
   }
 
@@ -20,6 +26,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/login"],
 }
 
