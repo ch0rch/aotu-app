@@ -23,7 +23,7 @@ export function AuthForm() {
         data: { session },
       } = await supabase.auth.getSession()
       if (session) {
-        router.push("/dashboard")
+        router.replace("/dashboard")
       }
     }
     checkSession()
@@ -43,7 +43,7 @@ export function AuthForm() {
         if (data.session) {
           console.log("Inicio de sesión exitoso")
           console.log("Intentando redirigir a /dashboard")
-          router.push("/dashboard")
+          router.replace("/dashboard", undefined, { shallow: false })
           console.log("Redirección ejecutada")
         }
       } else if (authMode === "register") {
@@ -53,7 +53,6 @@ export function AuthForm() {
         })
         if (error) throw error
         console.log("Registro exitoso")
-        // Aquí podrías mostrar un mensaje de verificación
       } else if (authMode === "forgotPassword") {
         const { error } = await supabase.auth.resetPasswordForEmail(email)
         if (error) throw error
