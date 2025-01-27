@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +18,7 @@ export function AuthForm() {
   const [password, setPassword] = useState("")
   const [authMode, setAuthMode] = useState<AuthMode>("login")
   const { toast } = useToast()
+  const router = useRouter()
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -45,7 +47,7 @@ export function AuthForm() {
 
           if (session) {
             console.log("Sesión verificada, redirigiendo a /dashboard")
-            window.location.href = "/dashboard"
+            router.push("/dashboard")
           } else {
             throw new Error("No se pudo obtener la sesión después del inicio de sesión")
           }
@@ -92,7 +94,7 @@ export function AuthForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
         },
       })
       if (error) throw error
