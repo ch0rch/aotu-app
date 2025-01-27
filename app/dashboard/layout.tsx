@@ -1,22 +1,28 @@
-import { AuthWrapper } from "@/components/auth-wrapper"
-import { Sidebar } from "@/components/sidebar"
-import { Header } from "@/components/header"
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <AuthWrapper>
-      <div className="flex min-h-screen">
-        <Sidebar className="border-r" />
-        <div className="flex-1">
-          <Header />
-          <main className="flex-1 p-8 pt-6">{children}</main>
-        </div>
-      </div>
-    </AuthWrapper>
-  )
+  const router = useRouter()
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        router.push("/login")
+      }
+    })
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [router])
+
+  return <>{children}</>
 }
 

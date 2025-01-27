@@ -38,13 +38,13 @@ export function AuthForm() {
 
     try {
       if (authMode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
 
-        console.log("Inicio de sesión exitoso")
+        console.log("Inicio de sesión exitoso", data)
         toast({
           title: "Inicio de sesión exitoso",
           description: "Redirigiendo al dashboard...",
