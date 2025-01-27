@@ -17,9 +17,9 @@ export default async function DashboardPage() {
   if (!session) {
     console.log("🔄 DashboardPage - No hay sesión, redirigiendo a /login")
     redirect("/login")
+    return null
   }
 
-  console.log("✅ DashboardPage - Sesión verificada, renderizando dashboard")
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>

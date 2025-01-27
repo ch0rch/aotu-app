@@ -16,7 +16,6 @@ export function AuthForm() {
   const [password, setPassword] = useState("")
   const [authMode, setAuthMode] = useState<AuthMode>("login")
   const { toast } = useToast()
-  //const router = useRouter()
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -34,20 +33,33 @@ export function AuthForm() {
         if (error) throw error
 
         console.log("✅ AuthForm - Inicio de sesión exitoso:", data)
-        toast({
-          title: "Inicio de sesión exitoso",
-          description: "Redirigiendo al dashboard...",
-        })
 
-        // Agregamos un pequeño delay para asegurar que la sesión se establezca
+        // Esperamos un momento para asegurar que la sesión se establezca
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
-        console.log("🔄 AuthForm - Intentando redirección a /dashboard")
-        window.location.href = "/dashboard"
+        // Verificamos que la sesión se haya establecido correctamente
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (session) {
+          toast({
+            title: "Inicio de sesión exitoso",
+            description: "Redirigiendo al dashboard...",
+          })
+
+          // Usamos window.location.replace para forzar un refresh completo
+          window.location.replace("/dashboard")
+        } else {
+          throw new Error("No se pudo establecer la sesión")
+        }
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
         })
         if (error) throw error
         toast({
