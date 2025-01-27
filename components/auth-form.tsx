@@ -23,6 +23,7 @@ export function AuthForm() {
         data: { session },
       } = await supabase.auth.getSession()
       if (session) {
+        console.log("Sesión existente encontrada, redirigiendo a /dashboard")
         router.replace("/dashboard")
       }
     }
@@ -43,7 +44,7 @@ export function AuthForm() {
         if (data.session) {
           console.log("Inicio de sesión exitoso")
           console.log("Intentando redirigir a /dashboard")
-          router.replace("/dashboard", undefined, { shallow: false })
+          router.replace("/dashboard")
           console.log("Redirección ejecutada")
         }
       } else if (authMode === "register") {
