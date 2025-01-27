@@ -22,9 +22,10 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
 
     checkAuth()
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN") {
         setIsLoading(false)
+        router.push("/dashboard")
       } else if (event === "SIGNED_OUT") {
         router.push("/login")
       }

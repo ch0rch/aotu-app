@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,18 @@ export function AuthForm() {
   const [password, setPassword] = useState("")
   const [authMode, setAuthMode] = useState<AuthMode>("login")
   const router = useRouter()
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session) {
+        router.push("/dashboard")
+      }
+    }
+    checkSession()
+  }, [router])
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -37,7 +49,7 @@ export function AuthForm() {
         })
         if (error) throw error
         console.log("Registro exitoso")
-        // Optionally, you can redirect here or show a verification message
+        // Aquí podrías mostrar un mensaje de verificación en lugar de redirigir
       } else if (authMode === "forgotPassword") {
         const { error } = await supabase.auth.resetPasswordForEmail(email)
         if (error) throw error
@@ -54,9 +66,11 @@ export function AuthForm() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
       })
       if (error) throw error
-      // Redirection after Google login will be handled by Supabase
     } catch (error) {
       console.error("Error al iniciar sesión con Google:", error)
     }
@@ -176,5 +190,6 @@ export function AuthForm() {
     </div>
   )
 }
+
 
 
