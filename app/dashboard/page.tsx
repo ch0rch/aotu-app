@@ -10,6 +10,7 @@ export default async function DashboardPage() {
   } = await supabase.auth.getSession()
 
   if (!session) {
+    console.log("No se encontró sesión en el servidor, redirigiendo a /login")
     redirect("/login")
   }
 
@@ -21,4 +22,5 @@ export default async function DashboardPage() {
     </div>
   )
 }
+
 

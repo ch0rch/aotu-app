@@ -27,6 +27,14 @@ export function AuthForm() {
       }
     })
 
+    // Verificar si ya hay una sesión activa al cargar el componente
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        console.log("Sesión activa encontrada, redirigiendo a /dashboard")
+        router.push("/dashboard")
+      }
+    })
+
     return () => {
       authListener.subscription.unsubscribe()
     }
@@ -45,6 +53,10 @@ export function AuthForm() {
         if (error) throw error
 
         console.log("Inicio de sesión exitoso", data)
+        if (data.session) {
+          console.log("Inicio de sesión exitoso, redirigiendo manualmente")
+          router.push("/dashboard")
+        }
         toast({
           title: "Inicio de sesión exitoso",
           description: "Redirigiendo al dashboard...",
@@ -178,7 +190,6 @@ export function AuthForm() {
     </div>
   )
 }
-
 
 
 
