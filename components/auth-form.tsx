@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,69 +19,25 @@ export function AuthForm() {
   const { toast } = useToast()
   const router = useRouter()
 
-  // Función para forzar la redirección
-  const forceRedirect = () => {
-    console.log("Forzando redirección a /dashboard")
-    window.location.href = "/dashboard"
-  }
-
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Evento de autenticación:", event)
-      if (event === "SIGNED_IN" && session) {
-        console.log("Usuario ha iniciado sesión, intentando redirección")
-        try {
-          await router.push("/dashboard")
-          // Si la redirección del router falla, forzamos la redirección
-          setTimeout(forceRedirect, 100)
-        } catch (error) {
-          console.error("Error en redirección:", error)
-          forceRedirect()
-        }
-      }
-    })
-
-    // Verificar sesión al cargar
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        console.log("Sesión activa encontrada, intentando redirección")
-        forceRedirect()
-      }
-    })
-
-    return () => {
-      authListener.subscription.unsubscribe()
-    }
-  }, [router, forceRedirect]) // Added forceRedirect to dependencies
-
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setIsLoading(true)
 
     try {
       if (authMode === "login") {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
 
-        console.log("Inicio de sesión exitoso", data)
         toast({
           title: "Inicio de sesión exitoso",
           description: "Redirigiendo al dashboard...",
         })
 
-        if (data.session) {
-          try {
-            await router.push("/dashboard")
-            // Si la redirección del router falla, forzamos la redirección
-            setTimeout(forceRedirect, 100)
-          } catch (error) {
-            console.error("Error en redirección:", error)
-            forceRedirect()
-          }
-        }
+        // Redirección simple
+        window.location.href = "/dashboard"
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({
           email,
