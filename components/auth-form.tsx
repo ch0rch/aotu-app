@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +19,19 @@ export function AuthForm() {
   const { toast } = useToast()
   const router = useRouter()
 
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        console.log("Usuario ha iniciado sesión, redirigiendo a /dashboard")
+        router.push("/dashboard")
+      }
+    })
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [router])
+
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setIsLoading(true)
@@ -36,8 +49,7 @@ export function AuthForm() {
           title: "Inicio de sesión exitoso",
           description: "Redirigiendo al dashboard...",
         })
-
-        router.push("/dashboard")
+        // La redirección se manejará en el efecto useEffect
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({
           email,
@@ -166,6 +178,8 @@ export function AuthForm() {
     </div>
   )
 }
+
+
 
 
 
