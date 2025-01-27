@@ -1,31 +1,113 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/ui/icons"
+import { supabase } from "@/lib/supabaseClient"
+import { useToast } from "@/components/ui/use-toast"
+
+type AuthMode = "login" | "register" | "forgotPassword"
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [authMode, setAuthMode] = useState<AuthMode>("login")
+  const { toast } = useToast()
+  const router = useRouter()
 
-  async function onSubmit(event: React.SyntheticEvent) {
+  async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setIsLoading(true)
 
-    setTimeout(() => {
+    try {
+      if (authMode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (error) throw error
+
+        console.log("Inicio de sesión exitoso")
+        toast({
+          title: "Inicio de sesión exitoso",
+          description: "Verificando sesión...",
+        })
+
+        try {
+          console.log("Esperando cambio de estado de autenticación...")
+          // waitForAuthStateChange is removed
+          //const session = await waitForAuthStateChange(15000) // Aumentamos el tiempo de espera a 15 segundos
+          //console.log("Sesión obtenida:", session)
+
+          //if (session) {
+          //  console.log("Sesión verificada, redirigiendo a /dashboard")
+          //  router.push("/dashboard")
+          //} else {
+          //  throw new Error("No se pudo obtener la sesión después del inicio de sesión")
+          //}
+          router.push("/dashboard") // Redirect directly after successful login
+        } catch (error) {
+          console.error("Error durante la redirección:", error)
+          toast({
+            title: "Error de redirección",
+            description: "Hubo un problema al verificar la sesión. Por favor, intenta nuevamente o recarga la página.",
+            variant: "destructive",
+          })
+        }
+      } else if (authMode === "register") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        })
+        if (error) throw error
+        toast({
+          title: "Registro exitoso",
+          description: "Por favor, verifica tu correo electrónico para confirmar tu cuenta.",
+        })
+      } else if (authMode === "forgotPassword") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email)
+        if (error) throw error
+        toast({
+          title: "Correo enviado",
+          description: "Se ha enviado un correo con instrucciones para restablecer tu contraseña.",
+        })
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
+        variant: "destructive",
+      })
+    } finally {
       setIsLoading(false)
-    }, 3000)
+    }
   }
 
   return (
     <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
       <div className="flex flex-col space-y-2 text-center">
         <Icons.logo className="mx-auto h-6 w-6" />
-        <h1 className="text-2xl font-semibold tracking-tight">Bienvenido a AOTU</h1>
-        <p className="text-sm text-muted-foreground">Ingresa tus credenciales para acceder al sistema</p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {authMode === "login"
+            ? "Bienvenido de vuelta"
+            : authMode === "register"
+              ? "Crea tu cuenta"
+              : "Recupera tu contraseña"}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {authMode === "login"
+            ? "Ingresa tus credenciales para acceder"
+            : authMode === "register"
+              ? "Ingresa tus datos para registrarte"
+              : "Ingresa tu correo para recuperar tu contraseña"}
+        </p>
       </div>
-      <div className={`grid gap-6`}>
+      <div className="grid gap-6">
         <form onSubmit={onSubmit}>
           <div className="grid gap-2">
             <div className="grid gap-1">
@@ -40,56 +122,67 @@ export function AuthForm() {
                 autoComplete="email"
                 autoCorrect="off"
                 disabled={isLoading}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div className="grid gap-1">
-              <Label className="sr-only" htmlFor="password">
-                Contraseña
-              </Label>
-              <Input
-                id="password"
-                placeholder="Contraseña"
-                type="password"
-                autoCapitalize="none"
-                autoComplete="current-password"
-                autoCorrect="off"
-                disabled={isLoading}
-              />
-            </div>
+            {authMode !== "forgotPassword" && (
+              <div className="grid gap-1">
+                <Label className="sr-only" htmlFor="password">
+                  Contraseña
+                </Label>
+                <Input
+                  id="password"
+                  placeholder="Contraseña"
+                  type="password"
+                  autoCapitalize="none"
+                  autoComplete="current-password"
+                  autoCorrect="off"
+                  disabled={isLoading}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            )}
             <Button disabled={isLoading}>
               {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-              Iniciar sesión
+              {authMode === "login"
+                ? "Iniciar sesión"
+                : authMode === "register"
+                  ? "Registrarse"
+                  : "Enviar correo de recuperación"}
             </Button>
           </div>
         </form>
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">O continúa con</span>
-          </div>
-        </div>
-        <Button variant="outline" type="button" disabled={isLoading}>
-          {isLoading ? (
-            <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Icons.google className="mr-2 h-4 w-4" />
-          )}{" "}
-          Google
-        </Button>
       </div>
-      <p className="px-8 text-center text-sm text-muted-foreground">
-        Al hacer clic en continuar, aceptas nuestros{" "}
-        <a href="/terms" className="underline underline-offset-4 hover:text-primary">
-          Términos de servicio
-        </a>{" "}
-        y{" "}
-        <a href="/privacy" className="underline underline-offset-4 hover:text-primary">
-          Política de privacidad
-        </a>
-        .
-      </p>
+      <div className="px-8 text-center text-sm text-muted-foreground">
+        {authMode === "login" ? (
+          <>
+            ¿No tienes una cuenta?{" "}
+            <Button variant="link" className="underline underline-offset-4" onClick={() => setAuthMode("register")}>
+              Regístrate
+            </Button>
+          </>
+        ) : authMode === "register" ? (
+          <>
+            ¿Ya tienes una cuenta?{" "}
+            <Button variant="link" className="underline underline-offset-4" onClick={() => setAuthMode("login")}>
+              Inicia sesión
+            </Button>
+          </>
+        ) : (
+          <Button variant="link" className="underline underline-offset-4" onClick={() => setAuthMode("login")}>
+            Volver al inicio de sesión
+          </Button>
+        )}
+      </div>
+      {authMode === "login" && (
+        <div className="text-center text-sm">
+          <Button variant="link" className="underline underline-offset-4" onClick={() => setAuthMode("forgotPassword")}>
+            ¿Olvidaste tu contraseña?
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
