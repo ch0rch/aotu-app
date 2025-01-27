@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/ui/icons"
 import { supabase } from "@/lib/supabaseClient"
+import { refreshSession, waitForAuthStateChange } from "@/lib/auth-utils"
 
 type AuthMode = "login" | "register" | "forgotPassword"
 
@@ -17,47 +18,30 @@ export function AuthForm() {
   const [authMode, setAuthMode] = useState<AuthMode>("login")
   const router = useRouter()
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      if (session) {
-        router.replace("/dashboard")
-      }
-    }
-    checkSession()
-  }, [router])
-
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        console.log("Usuario autenticado, redirigiendo a /dashboard")
-        router.push("/dashboard")
-      }
-    })
-
-    return () => {
-      authListener.subscription.unsubscribe()
-    }
-  }, [router])
-
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setIsLoading(true)
 
     try {
       if (authMode === "login") {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
-        if (data.session) {
-          console.log("Inicio de sesión exitoso")
-          console.log("Intentando redirigir a /dashboard")
-          router.push("/dashboard")
-          console.log("Redirección ejecutada")
+
+        console.log("Inicio de sesión exitoso")
+
+        // Esperar a que la sesión se actualice
+        await waitForAuthStateChange()
+
+        // Refrescar la sesión para asegurarnos de que está disponible
+        const session = await refreshSession()
+
+        if (session) {
+          console.log("Sesión verificada, redirigiendo a /dashboard")
+          // Forzar una navegación completa
+          window.location.href = "/dashboard"
         }
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({
