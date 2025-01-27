@@ -1,10 +1,10 @@
-import { SunMedium, Moon, Twitter, type LightbulbIcon as LucideProps } from "lucide-react"
+import { SunMedium, Moon, Twitter, type LucideIcon } from "lucide-react"
 
 export const Icons = {
   sun: SunMedium,
   moon: Moon,
   twitter: Twitter,
-  logo: (props: LucideProps) => (
+  logo: (props: React.ComponentProps<LucideIcon>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
       <path
         fill="currentColor"
@@ -12,7 +12,7 @@ export const Icons = {
       />
     </svg>
   ),
-  spinner: (props: LucideProps) => (
+  spinner: (props: React.ComponentProps<LucideIcon>) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="24"
@@ -28,7 +28,7 @@ export const Icons = {
       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
     </svg>
   ),
-  google: (props: LucideProps) => (
+  google: (props: React.ComponentProps<LucideIcon>) => (
     <svg role="img" viewBox="0 0 24 24" {...props}>
       <path
         fill="currentColor"
@@ -38,6 +38,3 @@ export const Icons = {
   ),
 }
 
-
-  
-  
