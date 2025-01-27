@@ -35,13 +35,15 @@ export function AuthForm() {
 
     try {
       if (authMode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
-        console.log("Inicio de sesión exitoso")
-        router.push("/dashboard")
+        if (data.session) {
+          console.log("Inicio de sesión exitoso")
+          router.push("/dashboard")
+        }
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({
           email,
@@ -49,7 +51,7 @@ export function AuthForm() {
         })
         if (error) throw error
         console.log("Registro exitoso")
-        // Aquí podrías mostrar un mensaje de verificación en lugar de redirigir
+        // Aquí podrías mostrar un mensaje de verificación
       } else if (authMode === "forgotPassword") {
         const { error } = await supabase.auth.resetPasswordForEmail(email)
         if (error) throw error
