@@ -22,22 +22,29 @@ export function AuthForm() {
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setIsLoading(true)
+    console.log("📝 AuthForm - Iniciando proceso de autenticación")
 
     try {
       if (authMode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log("🔑 AuthForm - Intentando iniciar sesión con email")
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
+
         if (error) throw error
 
+        console.log("✅ AuthForm - Inicio de sesión exitoso:", data)
         toast({
           title: "Inicio de sesión exitoso",
           description: "Redirigiendo al dashboard...",
         })
 
-        // Usar router.push para la redirección
-        router.push("/dashboard")
+        // Agregamos un pequeño delay para asegurar que la sesión se establezca
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        console.log("🔄 AuthForm - Intentando redirección a /dashboard")
+        window.location.href = "/dashboard"
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({
           email,
@@ -57,7 +64,7 @@ export function AuthForm() {
         })
       }
     } catch (error) {
-      console.error("Error:", error)
+      console.error("❌ AuthForm - Error durante la autenticación:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
