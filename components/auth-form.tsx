@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,7 +15,7 @@ export function AuthForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [authMode, setAuthMode] = useState<AuthMode>("login")
-  const router = useRouter()
+  // Removed: const router = useRouter()
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -190,6 +189,8 @@ export function AuthForm() {
     </div>
   )
 }
+
+
 
 
 
