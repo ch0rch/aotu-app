@@ -19,26 +19,40 @@ export function AuthForm() {
   const { toast } = useToast()
   const router = useRouter()
 
+  // Función para forzar la redirección
+  const forceRedirect = () => {
+    console.log("Forzando redirección a /dashboard")
+    window.location.href = "/dashboard"
+  }
+
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Evento de autenticación:", event)
       if (event === "SIGNED_IN" && session) {
-        console.log("Usuario ha iniciado sesión, redirigiendo a /dashboard")
-        router.push("/dashboard")
+        console.log("Usuario ha iniciado sesión, intentando redirección")
+        try {
+          await router.push("/dashboard")
+          // Si la redirección del router falla, forzamos la redirección
+          setTimeout(forceRedirect, 100)
+        } catch (error) {
+          console.error("Error en redirección:", error)
+          forceRedirect()
+        }
       }
     })
 
-    // Verificar si ya hay una sesión activa al cargar el componente
+    // Verificar sesión al cargar
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        console.log("Sesión activa encontrada, redirigiendo a /dashboard")
-        router.push("/dashboard")
+        console.log("Sesión activa encontrada, intentando redirección")
+        forceRedirect()
       }
     })
 
     return () => {
       authListener.subscription.unsubscribe()
     }
-  }, [router])
+  }, [router, forceRedirect]) // Added forceRedirect to dependencies
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -53,15 +67,21 @@ export function AuthForm() {
         if (error) throw error
 
         console.log("Inicio de sesión exitoso", data)
-        if (data.session) {
-          console.log("Inicio de sesión exitoso, redirigiendo manualmente")
-          router.push("/dashboard")
-        }
         toast({
           title: "Inicio de sesión exitoso",
           description: "Redirigiendo al dashboard...",
         })
-        // La redirección se manejará en el efecto useEffect
+
+        if (data.session) {
+          try {
+            await router.push("/dashboard")
+            // Si la redirección del router falla, forzamos la redirección
+            setTimeout(forceRedirect, 100)
+          } catch (error) {
+            console.error("Error en redirección:", error)
+            forceRedirect()
+          }
+        }
       } else if (authMode === "register") {
         const { error } = await supabase.auth.signUp({
           email,
