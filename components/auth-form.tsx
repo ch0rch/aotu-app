@@ -23,11 +23,23 @@ export function AuthForm() {
         data: { session },
       } = await supabase.auth.getSession()
       if (session) {
-        console.log("Sesión existente encontrada, redirigiendo a /dashboard")
         router.replace("/dashboard")
       }
     }
     checkSession()
+  }, [router])
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        console.log("Usuario autenticado, redirigiendo a /dashboard")
+        router.push("/dashboard")
+      }
+    })
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
   }, [router])
 
   async function onSubmit(event: React.FormEvent) {
@@ -44,7 +56,7 @@ export function AuthForm() {
         if (data.session) {
           console.log("Inicio de sesión exitoso")
           console.log("Intentando redirigir a /dashboard")
-          router.replace("/dashboard")
+          router.push("/dashboard")
           console.log("Redirección ejecutada")
         }
       } else if (authMode === "register") {

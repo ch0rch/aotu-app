@@ -17,8 +17,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
 
-  if (session && req.nextUrl.pathname === "/login") {
-    console.log("Middleware: Sesión activa en /login, redirigiendo a /dashboard")
+  if (session && (req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/")) {
+    console.log("Middleware: Sesión activa, redirigiendo a /dashboard")
     return NextResponse.redirect(new URL("/dashboard", req.url))
   }
 
@@ -27,6 +27,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/dashboard/:path*"],
+  matcher: ["/", "/login", "/dashboard/:path*"],
 }
 
