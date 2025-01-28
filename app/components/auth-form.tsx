@@ -65,11 +65,7 @@ export function AuthForm() {
             description: "Redirigiendo al dashboard...",
           })
 
-          // Esperar un momento para asegurar que la sesión se establezca
-          await new Promise((resolve) => setTimeout(resolve, 1000))
-
-          // Forzar una recarga completa para asegurar que la sesión se actualice en todos los componentes
-          window.location.href = "/dashboard"
+          router.push("/dashboard")
         } else {
           throw new Error("No se pudo establecer la sesión")
         }
@@ -195,6 +191,22 @@ export function AuthForm() {
             </Button>
           </div>
         </form>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">O continúa con</span>
+          </div>
+        </div>
+        <Button variant="outline" type="button" disabled={isLoading} onClick={handleGoogleLogin}>
+          {isLoading ? (
+            <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Icons.google className="mr-2 h-4 w-4" />
+          )}{" "}
+          Google
+        </Button>
       </div>
       <div className="px-8 text-center text-sm text-muted-foreground">
         {authMode === "login" ? (
@@ -226,6 +238,17 @@ export function AuthForm() {
       )}
     </div>
   )
+}
+
+async function handleGoogleLogin() {
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+    })
+    if (error) throw error
+  } catch (error) {
+    console.error("Error al iniciar sesión con Google:", error)
+  }
 }
 
 
