@@ -1,26 +1,22 @@
-"use client"
+import { redirect } from "next/navigation"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+import { headers } from "next/headers"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
+export default async function AuthCallbackPage() {
+  const supabase = createServerComponentClient({ cookies })
 
-export default function AuthCallbackPage() {
-  const router = useRouter()
+  const headersList = headers()
+  const xUrl = headersList.get("x-url")
+  const { searchParams } = new URL(xUrl || "", process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000")
+  const code = searchParams.get("code")
 
-  useEffect(() => {
-    const handleAuthCallback = async () => {
-      const { error } = await supabase.auth.getSession()
-      if (error) {
-        console.error("Error en la autenticación:", error)
-        router.push("/login")
-      } else {
-        router.push("/dashboard")
-      }
-    }
+  console.log("Auth callback initiated", { code, searchParams: Object.fromEntries(searchParams) })
 
-    handleAuthCallback()
-  }, [router])
+  if (code) {
+    await supabase.auth.exchangeCodeForSession(code)
+  }
 
-  return <div>Procesando autenticación...</div>
+  return redirect("/dashboard")
 }
 
