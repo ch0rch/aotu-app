@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,19 @@ export function AuthForm() {
   const [authMode, setAuthMode] = useState<AuthMode>("login")
   const { toast } = useToast()
   const router = useRouter()
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session) {
+        console.log("Sesión existente detectada, redirigiendo al dashboard")
+        router.push("/dashboard")
+      }
+    }
+    checkSession()
+  }, [router])
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -52,8 +65,11 @@ export function AuthForm() {
             description: "Redirigiendo al dashboard...",
           })
 
-          // Usar router.push en lugar de window.location.replace
-          router.push("/dashboard")
+          // Esperar un momento para asegurar que la sesión se establezca
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+
+          // Forzar una recarga completa para asegurar que la sesión se actualice en todos los componentes
+          window.location.href = "/dashboard"
         } else {
           throw new Error("No se pudo establecer la sesión")
         }
@@ -211,5 +227,6 @@ export function AuthForm() {
     </div>
   )
 }
+
 
 
