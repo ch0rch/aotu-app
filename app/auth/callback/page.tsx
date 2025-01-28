@@ -4,6 +4,19 @@ import { cookies } from "next/headers"
 import { headers } from "next/headers"
 
 export default async function PaginaCallbackAutenticacion() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("Variables de entorno de Supabase no encontradas")
+    return (
+      <div>
+        <h1>Error de configuración</h1>
+        <p>Las variables de entorno de Supabase no están configuradas correctamente.</p>
+      </div>
+    )
+  }
+
   const supabase = createServerComponentClient({ cookies })
 
   const listaEncabezados = await headers()
