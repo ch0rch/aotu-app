@@ -24,23 +24,31 @@ export function AuthForm() {
 
     try {
       if (authMode === "login") {
-        console.log("🔑 AuthForm - Intentando iniciar sesión con email")
+        console.log("🔑 AuthForm - Intentando iniciar sesión con:", { email })
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
 
-        if (error) throw error
+        if (error) {
+          console.error("❌ AuthForm - Error detallado:", {
+            message: error.message,
+            status: error.status,
+            name: error.name,
+          })
+          throw error
+        }
 
-        console.log("✅ AuthForm - Inicio de sesión exitoso:", data)
-
-        // Esperamos un momento para asegurar que la sesión se establezca
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        console.log("✅ AuthForm - Respuesta de inicio de sesión:", {
+          user: data.user?.email,
+          session: !!data.session,
+        })
 
         // Verificamos que la sesión se haya establecido correctamente
         const {
           data: { session },
         } = await supabase.auth.getSession()
+        console.log("🔍 AuthForm - Verificación de sesión:", !!session)
 
         if (session) {
           toast({
@@ -48,20 +56,32 @@ export function AuthForm() {
             description: "Redirigiendo al dashboard...",
           })
 
-          // Usamos window.location.replace para forzar un refresh completo
+          // Esperamos un momento antes de redirigir
+          await new Promise((resolve) => setTimeout(resolve, 1000))
           window.location.replace("/dashboard")
         } else {
           throw new Error("No se pudo establecer la sesión")
         }
       } else if (authMode === "register") {
-        const { error } = await supabase.auth.signUp({
+        console.log("📝 AuthForm - Intentando registro con:", { email })
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         })
-        if (error) throw error
+
+        if (error) {
+          console.error("❌ AuthForm - Error en registro:", error)
+          throw error
+        }
+
+        console.log("✅ AuthForm - Registro exitoso:", {
+          user: data.user?.email,
+          confirmationSent: !data.session,
+        })
+
         toast({
           title: "Registro exitoso",
           description: "Por favor, verifica tu correo electrónico para confirmar tu cuenta.",
@@ -76,9 +96,22 @@ export function AuthForm() {
       }
     } catch (error) {
       console.error("❌ AuthForm - Error durante la autenticación:", error)
+
+      // Mejorar el mensaje de error para el usuario
+      let errorMessage = "Ocurrió un error inesperado"
+      if (error instanceof Error) {
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Credenciales inválidas. Por favor verifica tu email y contraseña."
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Email no confirmado. Por favor verifica tu correo electrónico."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
+        title: "Error de autenticación",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -184,10 +217,3 @@ export function AuthForm() {
     </div>
   )
 }
-
-
-
-
-
-
-
