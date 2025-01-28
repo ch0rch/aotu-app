@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/ui/icons"
 import { supabase } from "@/lib/supabaseClient"
+import { useToast } from "@/components/ui/use-toast"
 
 type AuthMode = "login" | "register" | "forgotPassword"
 
@@ -14,46 +16,100 @@ export function AuthForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [authMode, setAuthMode] = useState<AuthMode>("login")
+  const { toast } = useToast()
+  const router = useRouter()
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setIsLoading(true)
+    console.log("📝 AuthForm - Iniciando proceso de autenticación")
 
     try {
       if (authMode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log("🔑 AuthForm - Intentando iniciar sesión con:", { email })
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
-        if (error) throw error
-        console.log("Inicio de sesión exitoso")
+
+        if (error) {
+          console.error("❌ AuthForm - Error detallado:", {
+            message: error.message,
+            status: error.status,
+            name: error.name,
+          })
+          throw error
+        }
+
+        console.log("✅ AuthForm - Respuesta de inicio de sesión:", {
+          user: data.user?.email,
+          session: !!data.session,
+        })
+
+        if (data.session) {
+          toast({
+            title: "Inicio de sesión exitoso",
+            description: "Redirigiendo al dashboard...",
+          })
+
+          // Usar router.push en lugar de window.location.replace
+          router.push("/dashboard")
+        } else {
+          throw new Error("No se pudo establecer la sesión")
+        }
       } else if (authMode === "register") {
-        const { error } = await supabase.auth.signUp({
+        console.log("📝 AuthForm - Intentando registro con:", { email })
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
         })
-        if (error) throw error
-        console.log("Registro exitoso")
+
+        if (error) {
+          console.error("❌ AuthForm - Error en registro:", error)
+          throw error
+        }
+
+        console.log("✅ AuthForm - Registro exitoso:", {
+          user: data.user?.email,
+          confirmationSent: !data.session,
+        })
+
+        toast({
+          title: "Registro exitoso",
+          description: "Por favor, verifica tu correo electrónico para confirmar tu cuenta.",
+        })
       } else if (authMode === "forgotPassword") {
         const { error } = await supabase.auth.resetPasswordForEmail(email)
         if (error) throw error
-        console.log("Correo de recuperación enviado")
+        toast({
+          title: "Correo enviado",
+          description: "Se ha enviado un correo con instrucciones para restablecer tu contraseña.",
+        })
       }
     } catch (error) {
-      console.error("Error:", error)
+      console.error("❌ AuthForm - Error durante la autenticación:", error)
+
+      let errorMessage = "Ocurrió un error inesperado"
+      if (error instanceof Error) {
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Credenciales inválidas. Por favor verifica tu email y contraseña."
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Email no confirmado. Por favor verifica tu correo electrónico."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
+      toast({
+        title: "Error de autenticación",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  async function handleGoogleLogin() {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-      })
-      if (error) throw error
-    } catch (error) {
-      console.error("Error al iniciar sesión con Google:", error)
     }
   }
 
@@ -123,22 +179,6 @@ export function AuthForm() {
             </Button>
           </div>
         </form>
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">O continúa con</span>
-          </div>
-        </div>
-        <Button variant="outline" type="button" disabled={isLoading} onClick={handleGoogleLogin}>
-          {isLoading ? (
-            <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Icons.google className="mr-2 h-4 w-4" />
-          )}{" "}
-          Google
-        </Button>
       </div>
       <div className="px-8 text-center text-sm text-muted-foreground">
         {authMode === "login" ? (
@@ -171,4 +211,5 @@ export function AuthForm() {
     </div>
   )
 }
+
 
