@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,6 +17,20 @@ export function AuthForm() {
   const [password, setPassword] = useState("")
   const [authMode, setAuthMode] = useState<AuthMode>("login")
   const { toast } = useToast()
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session) {
+        console.log("Sesión existente detectada, redirigiendo al dashboard")
+        router.push("/dashboard")
+      }
+    }
+    checkSession()
+  }, [router])
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -44,21 +59,14 @@ export function AuthForm() {
           session: !!data.session,
         })
 
-        // Verificamos que la sesión se haya establecido correctamente
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        console.log("🔍 AuthForm - Verificación de sesión:", !!session)
-
-        if (session) {
+        if (data.session) {
           toast({
             title: "Inicio de sesión exitoso",
             description: "Redirigiendo al dashboard...",
           })
 
-          // Esperamos un momento antes de redirigir
-          await new Promise((resolve) => setTimeout(resolve, 1000))
-          window.location.replace("/dashboard")
+          // Usar router.push en lugar de window.location.href
+          router.push("/dashboard")
         } else {
           throw new Error("No se pudo establecer la sesión")
         }
@@ -97,7 +105,6 @@ export function AuthForm() {
     } catch (error) {
       console.error("❌ AuthForm - Error durante la autenticación:", error)
 
-      // Mejorar el mensaje de error para el usuario
       let errorMessage = "Ocurrió un error inesperado"
       if (error instanceof Error) {
         if (error.message.includes("Invalid login credentials")) {
@@ -217,3 +224,4 @@ export function AuthForm() {
     </div>
   )
 }
+
