@@ -13,13 +13,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 console.log("✅ Inicializando cliente Supabase con URL:", supabaseUrl)
 
-export const supabase = createClient(supabase
-
-Url, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
-  }
+    detectSessionInUrl: true,
+  },
 })
 
